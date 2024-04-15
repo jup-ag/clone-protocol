@@ -155,7 +155,7 @@ impl CloneInterface {
         let mut data: Vec<u8> = CloneSwapArgs::discriminator().into_iter().collect();
         data.extend(args.try_to_vec()?.iter());
 
-        let account_metas = self.get_swap_and_account_metas(swap_params)?.account_metas;
+        let account_metas = self.get_swap_and_account_metas(swap_params)?.account_metas[1..].to_vec();
 
         Ok(Instruction {
             program_id: self.program_id(),
@@ -174,9 +174,7 @@ impl CloneInterface {
 }
 
 impl Amm for CloneInterface {
-    // Load oracle account
     fn from_keyed_account(keyed_account: &KeyedAccount) -> Result<Self> {
-        // Key account should correspond to the oracle info
         let mut v = keyed_account.account.data.as_slice();
         let pools = Pools::try_deserialize(&mut v)?;
 
@@ -302,36 +300,36 @@ impl Amm for CloneInterface {
                 .into(),
             )?;
 
-        let current_clock_slot = self
-            .clock
-            .as_ref()
-            .ok_or::<CloneInterfaceError>(
-                CloneInterfaceError::PropertyNotLoaded(String::from("clock")).into(),
-            )?
-            .slot;
-        let threshold_clock_slot = current_clock_slot - self.oracle_slot_threshold();
+        // let current_clock_slot = self
+        //     .clock
+        //     .as_ref()
+        //     .ok_or::<CloneInterfaceError>(
+        //         CloneInterfaceError::PropertyNotLoaded(String::from("clock")).into(),
+        //     )?
+        //     .slot;
+        // let threshold_clock_slot = current_clock_slot - self.oracle_slot_threshold();
 
         let collateral_price_account = pyth_prices[clone.collateral.oracle_info_index as usize];
-        if collateral_price_account.last_slot < threshold_clock_slot {
-            return Err(CloneInterfaceError::OracleOutdated(
-                collateral_price_account.last_slot,
-                threshold_clock_slot,
-            )
-            .into());
-        }
+        // if collateral_price_account.last_slot < threshold_clock_slot {
+        //     return Err(CloneInterfaceError::OracleOutdated(
+        //         collateral_price_account.last_slot,
+        //         threshold_clock_slot,
+        //     )
+        //     .into());
+        // }
         let collateral_price = Decimal::new(
             collateral_price_account.agg.price,
             collateral_price_account.expo.abs() as u32,
         );
 
         let classet_price_account = pyth_prices[pool.asset_info.oracle_info_index as usize];
-        if classet_price_account.last_slot < threshold_clock_slot {
-            return Err(CloneInterfaceError::OracleOutdated(
-                classet_price_account.last_slot,
-                threshold_clock_slot,
-            )
-            .into());
-        }
+        // if classet_price_account.last_slot < threshold_clock_slot {
+        //     return Err(CloneInterfaceError::OracleOutdated(
+        //         classet_price_account.last_slot,
+        //         threshold_clock_slot,
+        //     )
+        //     .into());
+        // }
         let classet_price = Decimal::new(
             classet_price_account.agg.price,
             classet_price_account.expo.abs() as u32,
@@ -409,11 +407,12 @@ impl Amm for CloneInterface {
         } else {
             swap_params.source_mint
         };
-        let pool = self
+        let (pool_index, pool) = self
             .pools
             .pools
             .iter()
-            .find(|p| {
+            .enumerate()
+            .find(|(_, p)| {
                 let classet_mint = p.asset_info.onasset_mint;
                 if input_is_collateral {
                     classet_mint.eq(&swap_params.destination_mint)
@@ -431,6 +430,8 @@ impl Amm for CloneInterface {
 
         let mut account_metas = Vec::new();
 
+        // program:
+        account_metas.push(AccountMeta::new_readonly(CLONE_PROGRAM_ID, false));
         // user
         account_metas.push(AccountMeta::new(swap_params.token_transfer_authority, true));
         // clone
@@ -487,7 +488,7 @@ impl Amm for CloneInterface {
         ));
 
         Ok(SwapAndAccountMetas {
-            swap: jupiter_amm_interface::Swap::Saber, // TODO: This should be Clone enum
+            swap: jupiter_amm_interface::Swap::Clone { pool_index: pool_index.try_into()?, quantity_is_input: true, quantity_is_collateral: input_is_collateral },
             account_metas,
         })
     }
@@ -520,7 +521,7 @@ impl Amm for CloneInterface {
     }
 
     fn requires_update_for_reserve_mints(&self) -> bool {
-        true
+        false
     }
 }
 
