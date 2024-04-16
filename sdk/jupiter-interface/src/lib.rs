@@ -3,7 +3,7 @@ use anyhow::Result;
 use clone::decimal::{BPS_SCALE, CLONE_TOKEN_SCALE};
 use clone::instruction::{Swap as CloneSwapArgs, UpdatePrices};
 use clone::instructions::{CLONE_PROGRAM_SEED, ORACLES_SEED, POOLS_SEED};
-use clone::states::{Clone, Oracles, Pools};
+use clone::states::{Clone, Oracles, Pools, Status};
 use clone::ID as CLONE_PROGRAM_ID;
 use jupiter_amm_interface::{
     AccountMap, Amm, AmmUserSetup, KeyedAccount, Quote, QuoteParams, SwapAndAccountMetas, SwapMode,
@@ -43,7 +43,6 @@ pub struct CloneInterface {
     pub oracles: Option<Oracles>,
     pub pyth_prices: Option<Vec<SolanaPriceAccount>>,
     pub key: Pubkey,
-    pub clock: Option<Clock>,
 }
 
 impl CloneInterface {
@@ -155,7 +154,8 @@ impl CloneInterface {
         let mut data: Vec<u8> = CloneSwapArgs::discriminator().into_iter().collect();
         data.extend(args.try_to_vec()?.iter());
 
-        let account_metas = self.get_swap_and_account_metas(swap_params)?.account_metas[1..].to_vec();
+        let account_metas =
+            self.get_swap_and_account_metas(swap_params)?.account_metas[1..].to_vec();
 
         Ok(Instruction {
             program_id: self.program_id(),
@@ -184,7 +184,6 @@ impl Amm for CloneInterface {
             oracles: None,
             pyth_prices: None,
             key: keyed_account.key,
-            clock: None,
         })
     }
     /// A human readable label of the underlying DEX
@@ -213,7 +212,6 @@ impl Amm for CloneInterface {
             get_clone_account_address(),
             get_pools_account_address(),
             get_oracles_account_address(),
-            sysvar::clock::ID,
         ];
         if let Some(oracles) = &self.oracles {
             oracles
@@ -259,12 +257,6 @@ impl Amm for CloneInterface {
         self.oracles = Some(oracles);
         self.pyth_prices = Some(pyth_prices);
 
-        let clock_account = account_map
-            .get(&sysvar::clock::ID)
-            .ok_or::<CloneInterfaceError>(CloneInterfaceError::MissingAddress(sysvar::clock::ID))?;
-        let clock: Clock = clock_account.deserialize_data()?;
-        self.clock = Some(clock);
-
         Ok(())
     }
 
@@ -279,6 +271,14 @@ impl Amm for CloneInterface {
         let collateral_mint = clone.collateral.mint;
 
         let input_is_collateral = collateral_mint.eq(&quote_params.input_mint);
+
+        if !input_is_collateral && !collateral_mint.eq(&quote_params.output_mint) {
+            return Err(CloneInterfaceError::PoolNotFound(
+                quote_params.input_mint,
+                quote_params.output_mint,
+            )
+            .into());
+        }
 
         let pool = self
             .pools
@@ -300,36 +300,19 @@ impl Amm for CloneInterface {
                 .into(),
             )?;
 
-        // let current_clock_slot = self
-        //     .clock
-        //     .as_ref()
-        //     .ok_or::<CloneInterfaceError>(
-        //         CloneInterfaceError::PropertyNotLoaded(String::from("clock")).into(),
-        //     )?
-        //     .slot;
-        // let threshold_clock_slot = current_clock_slot - self.oracle_slot_threshold();
+        if pool.status != Status::Active {
+            return Err(CloneInterfaceError::PoolIsNotTradeable(pool.status).into());
+        }
 
         let collateral_price_account = pyth_prices[clone.collateral.oracle_info_index as usize];
-        // if collateral_price_account.last_slot < threshold_clock_slot {
-        //     return Err(CloneInterfaceError::OracleOutdated(
-        //         collateral_price_account.last_slot,
-        //         threshold_clock_slot,
-        //     )
-        //     .into());
-        // }
+
         let collateral_price = Decimal::new(
             collateral_price_account.agg.price,
             collateral_price_account.expo.abs() as u32,
         );
 
         let classet_price_account = pyth_prices[pool.asset_info.oracle_info_index as usize];
-        // if classet_price_account.last_slot < threshold_clock_slot {
-        //     return Err(CloneInterfaceError::OracleOutdated(
-        //         classet_price_account.last_slot,
-        //         threshold_clock_slot,
-        //     )
-        //     .into());
-        // }
+
         let classet_price = Decimal::new(
             classet_price_account.agg.price,
             classet_price_account.expo.abs() as u32,
@@ -488,7 +471,11 @@ impl Amm for CloneInterface {
         ));
 
         Ok(SwapAndAccountMetas {
-            swap: jupiter_amm_interface::Swap::Clone { pool_index: pool_index.try_into()?, quantity_is_input: true, quantity_is_collateral: input_is_collateral },
+            swap: jupiter_amm_interface::Swap::Clone {
+                pool_index: pool_index.try_into()?,
+                quantity_is_input: true,
+                quantity_is_collateral: input_is_collateral,
+            },
             account_metas,
         })
     }
@@ -539,6 +526,9 @@ pub enum CloneInterfaceError {
     #[error("Type conversion failed for {0}")]
     TypeConversionFailed(String),
 
-    #[error("Oracle is outdated, {0} vs {1}")]
-    OracleOutdated(u64, u64),
+    #[error("Pool not tradeable due to status")]
+    PoolIsNotTradeable(Status),
+
+    #[error("Unsupported trading pair {0} -> {1}")]
+    UnsupportedTradingPair(Pubkey, Pubkey),
 }
