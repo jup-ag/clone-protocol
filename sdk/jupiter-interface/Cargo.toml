@@ -11,7 +11,7 @@ anyhow = "1.0.81"
 anchor-lang = "0.26.0"
 solana-program = "1.16.23"
 solana-sdk = "1.16.23"
-jupiter-amm-interface = "0.3.3"
+jupiter-amm-interface = { git = "https://github.com/jup-ag/jupiter-amm-interface.git", rev = "05068ce" }
 pyth-sdk-solana = "0.10.0"
 rust_decimal = "1.25.0"
 thiserror = "1.0.58"
