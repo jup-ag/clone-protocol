@@ -1,10 +1,13 @@
 use anchor_lang::{AccountDeserialize, AnchorSerialize, Discriminator};
 use anyhow::Result;
-use clone::decimal::{BPS_SCALE, CLONE_TOKEN_SCALE};
-use clone::instruction::{Swap as CloneSwapArgs, UpdatePrices};
-use clone::instructions::{CLONE_PROGRAM_SEED, ORACLES_SEED, POOLS_SEED};
-use clone::states::{Clone, OracleSource, Oracles, Pools, Status};
-use clone::ID as CLONE_PROGRAM_ID;
+use clone::{
+    decimal::{BPS_SCALE, CLONE_TOKEN_SCALE},
+    instruction::UpdatePrices,
+    instructions::{CLONE_PROGRAM_SEED, ORACLES_SEED, POOLS_SEED},
+    load_price_account,
+    states::{Clone, Oracles, Pools, Status},
+    SolanaPriceAccount, ID as CLONE_PROGRAM_ID,
+};
 use jupiter_amm_interface::{
     AccountMap, Amm, AmmUserSetup, KeyedAccount, Quote, QuoteParams, SwapAndAccountMetas, SwapMode,
     SwapParams,
