@@ -7,6 +7,9 @@ pub mod instructions;
 pub mod math;
 pub mod states;
 
+// Re-export for sdk usage
+pub use pyth_sdk_solana::state::{load_price_account, SolanaPriceAccount};
+
 use instructions::*;
 
 declare_id!("C1onEW2kPetmHmwe74YC1ESx3LnFEpVau6g2pg4fHycr");

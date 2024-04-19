@@ -8,11 +8,10 @@ edition = "2021"
 [dependencies]
 clone = { path = "../../programs/clone", version = "0.1.0" }
 anyhow = "1.0.81"
-anchor-lang = "0.26.0"
-solana-program = "1.16.23"
-solana-sdk = "1.16.23"
+anchor-lang = "0.28.0"
+solana-program = "~1.16"
+solana-sdk = "~1.16"
 jupiter-amm-interface = { git = "https://github.com/jup-ag/jupiter-amm-interface.git", rev = "05068ce" }
-pyth-sdk-solana = "0.10.0"
 rust_decimal = "1.25.0"
 thiserror = "1.0.58"
 spl-associated-token-account = "2.0.0"
