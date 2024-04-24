@@ -342,6 +342,14 @@ impl Amm for CloneInterface {
             None,
         )?;
 
+        let swap_is_valid = swap_result.result > Decimal::ZERO
+            && swap_result.liquidity_fees_paid > Decimal::ZERO
+            && swap_result.treasury_fees_paid > Decimal::ZERO;
+
+        if !swap_is_valid {
+            return Err(CloneInterfaceError::SwapAmountTooLow.into());
+        }
+
         let fee_amount: u64 = (swap_result.liquidity_fees_paid.mantissa()
             + swap_result.treasury_fees_paid.mantissa())
         .try_into()?;
@@ -531,4 +539,7 @@ pub enum CloneInterfaceError {
 
     #[error("Unsupported trading pair {0} -> {1}")]
     UnsupportedTradingPair(Pubkey, Pubkey),
+
+    #[error("Swap amount too low.")]
+    SwapAmountTooLow,
 }
