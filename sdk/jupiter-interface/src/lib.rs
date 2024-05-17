@@ -18,7 +18,7 @@ use solana_sdk::pubkey::Pubkey;
 use solana_sdk::sysvar::{self};
 use spl_associated_token_account::get_associated_token_address;
 use spl_token::ID as SPL_TOKEN_PROGRAM;
-use switchboard_solana::prelude::AnchorDeserialize;
+use switchboard_solana::prelude::AccountDeserialize as SBAccountDeserialize;
 use switchboard_solana::AggregatorAccountData;
 use thiserror::Error;
 
@@ -272,7 +272,8 @@ impl Amm for CloneInterface {
                         Decimal::from_i128_with_scale(data_feed.mantissa, data_feed.scale)
                     }
                     OracleSource::PYTHV2 => {
-                        let price_info = PriceUpdateV2::try_from_slice(price_account.data())?;
+                        let mut buf = price_account.data();
+                        let price_info = PriceUpdateV2::try_deserialize(&mut buf)?;
                         Decimal::new(
                             price_info.price_message.price,
                             price_info.price_message.exponent.abs().try_into()?,
