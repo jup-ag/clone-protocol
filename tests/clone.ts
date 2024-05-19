@@ -458,7 +458,7 @@ describe("tests", async () => {
 
   it("add and check Pyth V2 oracle", async () => {
     let pythV2FeedAddress = new PublicKey(
-      "CQanas4srymHLigVyu56ynJhKZzKYJvBa45VAsTgXSvM"
+      "Fm8a8nif7Ls9MzBonTm1MoqGpYG5sELyA2SyQseQjKcB"
     );
     await cloneClient.updateOracles({
       params: {
