@@ -256,7 +256,7 @@ impl Amm for CloneInterface {
                 .get(&info.address)
                 .ok_or::<CloneInterfaceError>(CloneInterfaceError::MissingAddress(info.address))
             {
-                let oracle_price = match info.source {
+                let mut oracle_price = match info.source {
                     OracleSource::PYTH => {
                         let price_account: SolanaPriceAccount =
                             *load_price_account(price_account.data())?;
@@ -280,6 +280,10 @@ impl Amm for CloneInterface {
                         )
                     }
                 };
+                if info.rescale_factor != 0 {
+                    oracle_price = oracle_price / Decimal::new(1, info.rescale_factor.into());
+                }
+
                 oracle_prices.push(oracle_price)
             }
         }
