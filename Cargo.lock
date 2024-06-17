@@ -1192,6 +1192,7 @@ dependencies = [
  "mpl-token-metadata",
  "pyth-client",
  "pyth-sdk-solana",
+ "pyth-solana-receiver-sdk",
  "rust_decimal",
  "rust_decimal_macros",
  "solana-program",
