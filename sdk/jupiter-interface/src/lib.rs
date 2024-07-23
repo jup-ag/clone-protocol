@@ -2,26 +2,23 @@ use anchor_lang::{AccountDeserialize, AnchorSerialize, Discriminator};
 use anyhow::Result;
 use clone::{
     decimal::{BPS_SCALE, CLONE_TOKEN_SCALE},
-    instruction::UpdatePrices,
+    instruction::{Swap as CloneSwapArgs, UpdatePrices},
     instructions::{CLONE_PROGRAM_SEED, ORACLES_SEED, POOLS_SEED},
     load_price_account,
-    states::{Clone, Oracles, Pools, Status},
+    states::{Clone, OracleSource, Oracles, Pools, Status},
     SolanaPriceAccount, ID as CLONE_PROGRAM_ID,
 };
 use jupiter_amm_interface::{
     AccountMap, Amm, AmmUserSetup, KeyedAccount, Quote, QuoteParams, SwapAndAccountMetas, SwapMode,
     SwapParams,
 };
-use pyth_sdk_solana::state::{load_price_account, SolanaPriceAccount};
 use pyth_solana_receiver_sdk::price_update::PriceUpdateV2;
 use rust_decimal::prelude::*;
 use solana_sdk::account::ReadableAccount;
 use solana_sdk::instruction::{AccountMeta, Instruction};
 use solana_sdk::pubkey::Pubkey;
-use solana_sdk::sysvar::{self};
 use spl_associated_token_account::get_associated_token_address;
 use spl_token::ID as SPL_TOKEN_PROGRAM;
-use switchboard_solana::prelude::AccountDeserialize as SBAccountDeserialize;
 use switchboard_solana::AggregatorAccountData;
 use thiserror::Error;
 
