@@ -1,4 +1,4 @@
-use anchor_lang::{AccountDeserialize, AnchorSerialize, Discriminator};
+use anchor_lang::{AccountDeserialize, AnchorDeserialize, AnchorSerialize, Discriminator};
 use anyhow::Result;
 use clone::{
     decimal::{BPS_SCALE, CLONE_TOKEN_SCALE},
@@ -273,7 +273,7 @@ impl Amm for CloneInterface {
                     }
                     OracleSource::PYTHV2 => {
                         let mut buf = price_account.data();
-                        let price_info = PriceUpdateV2::try_deserialize(&mut buf)?;
+                        let price_info = PriceUpdateV2::deserialize(&mut buf)?;
                         Decimal::new(
                             price_info.price_message.price,
                             price_info.price_message.exponent.abs().try_into()?,

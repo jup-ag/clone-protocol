@@ -34,10 +34,7 @@ pub mod depository_token {
         require!(mint_amount > 0, DepositoryTokenError::MustBeNonZero);
         // Calculate how much we need to mint.
         let depositing_token_amount = mint_amount * ctx.accounts.settings.ratio;
-        let settings_bump = *ctx
-            .bumps
-            .get("settings")
-            .ok_or(error!(DepositoryTokenError::CouldNotGetSettingsBump))?;
+        let settings_bump = ctx.bumps.settings;
 
         // Transfer from user to depository.
         let cpi_program = ctx.accounts.token_program.to_account_info();
@@ -81,10 +78,7 @@ pub mod depository_token {
         require!(redeem_amount > 0, DepositoryTokenError::MustBeNonZero);
         // Calculate how much we need to redeem.
         let depositing_token_amount = redeem_amount * ctx.accounts.settings.ratio;
-        let settings_bump = *ctx
-            .bumps
-            .get("settings")
-            .ok_or(error!(DepositoryTokenError::CouldNotGetSettingsBump))?;
+        let settings_bump = ctx.bumps.settings;
 
         // Transfer from depository to user.
         let cpi_program = ctx.accounts.token_program.to_account_info();

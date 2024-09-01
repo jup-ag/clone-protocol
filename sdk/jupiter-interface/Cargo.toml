@@ -8,21 +8,21 @@ edition = "2021"
 [dependencies]
 clone = { path = "../../programs/clone", version = "0.1.0" }
 anyhow = "1.0.81"
-anchor-lang = "0.28.0"
-solana-program = "~1.16"
-solana-sdk = "~1.16"
+anchor-lang = "0.29.0"
+solana-program = "~1.18"
+solana-sdk = "~1.18"
 jupiter-amm-interface = { git = "https://github.com/jup-ag/jupiter-amm-interface.git", rev = "05068ce" }
 rust_decimal = "1.25.0"
 thiserror = "1.0.58"
 spl-associated-token-account = "2.0.0"
 spl-token = "4.0.0"
-switchboard-solana = "0.6.0"
-pyth-solana-receiver-sdk = "0.2.0"
+switchboard-solana = "0.30.4"
+pyth-solana-receiver-sdk = "0.3.1"
 
 
 [dev-dependencies]
 tokio = { version = "1.0", features = ["full"] }
 tokio-test = "0.4.0"
 rand = "0.8.5"
-solana-program-test = "1.16.23"
-solana-client = "1.16.23"
+solana-program-test = "~1.18"
+solana-client = "~1.18"
