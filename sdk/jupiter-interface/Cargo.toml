@@ -16,7 +16,7 @@ rust_decimal = "1.25.0"
 thiserror = "1.0.58"
 spl-associated-token-account = "2.0.0"
 spl-token = "4.0.0"
-switchboard-solana = "0.30.4"
+switchboard-solana = "0.29.110"
 pyth-solana-receiver-sdk = "0.3.1"
 
 
